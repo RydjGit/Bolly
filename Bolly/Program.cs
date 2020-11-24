@@ -29,7 +29,7 @@ namespace Bolly
 
             if (args.Length == 3)
             {
-                var proxies = SetupProxies(args[3]);
+                var proxies = SetupProxies(args[2]);
                 clientManager = new ClientManager(config).WithProxies(proxies);
             }
             else clientManager = new ClientManager(config);

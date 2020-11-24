@@ -14,7 +14,7 @@ namespace Bolly.Blocks
     {
         protected class KeyCheck
         {
-            public IEnumerable<KeyCheckPattern> KeyCheckPatterns { get; set; }
+            public IEnumerable<KeyCheckPattern> KeyCheckPattern { get; set; }
             public bool RetryIfNotFound { get; set; }
         }
 
@@ -107,7 +107,7 @@ namespace Bolly.Blocks
 
             _keyCheckProcess = new List<IKeyCheck>();
 
-            foreach (var keyCheckPattern in _keyCheck.KeyCheckPatterns)
+            foreach (var keyCheckPattern in _keyCheck.KeyCheckPattern)
             {
                 switch (keyCheckPattern.Condition.ToLower())
                 {

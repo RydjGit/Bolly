@@ -48,7 +48,7 @@ you can also specify a list of proxies ( http only )
       },
       {
          "Type":"KeyCheck",
-         "KeyCheckPatterns":[
+         "KeyCheckPattern":[
             {
                "Status":"Invalid",
                "Source":"<SOURCE>",

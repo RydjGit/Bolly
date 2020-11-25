@@ -85,16 +85,16 @@ namespace Bolly
         {
             if (!File.Exists(combosPath)) throw new FileNotFoundException($"{combosPath} not found");
 
-            var linesOfCombos = File.ReadAllLines(combosPath);
-            return linesOfCombos.Select(c => new Combo(c)).Where(c => c.IsValid);
+            var lines = File.ReadAllLines(combosPath);
+            return lines.Select(c => new Combo(c)).Where(c => c.IsValid);
         }
 
         private static IEnumerable<Proxy> SetupProxies(string proxiesPath)
         {
             if (!File.Exists(proxiesPath)) throw new FileNotFoundException($"{proxiesPath} not found");
 
-            var linesOfProxies = File.ReadAllLines(proxiesPath);
-            return linesOfProxies.Select(p => new Proxy(p)).Where(p => p.IsValid);
+            var lines = File.ReadAllLines(proxiesPath);
+            return lines.Select(p => new Proxy(p)).Where(p => p.IsValid);
         }
     }
 }

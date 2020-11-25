@@ -6,12 +6,10 @@ namespace Bolly
 {
     public class ConsoleManager
     {
-        private readonly string _checkerName;
         private readonly Checker _checker;
 
-        public ConsoleManager(string checkerName,  Checker checker)
+        public ConsoleManager(Checker checker)
         {
-            _checkerName = checkerName;
             _checker = checker;
         }
 
@@ -21,33 +19,33 @@ namespace Bolly
 
             while (true)
             {
-                var checkerStats = _checker.Stats;
+                var (Invalid, Free, Success, Unknwon, Retry, CPM) = _checker.Stats;
 
-                title.Append(_checkerName);
+                title.Append(_checker.Name);
 
                 title.Append(" - Invalid ");
-                title.Append(checkerStats.Invalid);
+                title.Append(Invalid);
 
                 title.Append(" Free ");
-                title.Append(checkerStats.Free);
+                title.Append(Free);
 
                 title.Append(" Success ");
-                title.Append(checkerStats.Success);
+                title.Append(Success);
 
                 title.Append(" Unknown ");
-                title.Append(checkerStats.Unknwon);
+                title.Append(Unknwon);
 
                 title.Append(" Retry ");
-                title.Append(checkerStats.Retry);
+                title.Append(Retry);
 
                 title.Append(" CPM ");
-                title.Append(checkerStats.CPM);
+                title.Append(CPM);
 
                 Console.Title = title.ToString();
 
                 title.Clear();
 
-                await Task.Delay(250);
+                await Task.Delay(750);
             }
         }
     }

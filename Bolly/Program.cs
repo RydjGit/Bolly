@@ -11,15 +11,9 @@ namespace Bolly
 {
     class Program
     {
-        private const string CheckerSettingsPath = "checkerSettings.json";
-
         static async Task Main(string[] args)
         {
             if (args.Length < 2) throw new ArgumentOutOfRangeException("Need to enter at least two arguments");
-
-            var checkerSettings = SetupCheckerSettings();
-
-            Directory.CreateDirectory(checkerSettings.OutputDirectory);
 
             var config = SetupConfig(args[0]);
 
@@ -34,9 +28,9 @@ namespace Bolly
             }
             else clientManager = new ClientManager(config);
 
-            var checker = new Checker(checkerSettings, config, combos, clientManager);
+            var checker = new Checker(config, combos, clientManager);
 
-            var consoleManager = new ConsoleManager(config.Name, checker);
+            var consoleManager = new ConsoleManager(checker);
 
             _ = consoleManager.StartUpdatingTitleAsync();
 
@@ -46,14 +40,6 @@ namespace Bolly
             Console.WriteLine("END");
 
             await Task.Delay(-1);
-        }
-
-        private static CheckerSettings SetupCheckerSettings()
-        {
-            if (!File.Exists(CheckerSettingsPath)) throw new FileNotFoundException($"{CheckerSettingsPath} not found");
-
-            string checkerSettingsContent = File.ReadAllText(CheckerSettingsPath);
-            return JsonSerializer.Deserialize<CheckerSettings>(checkerSettingsContent);
         }
 
         private static Config SetupConfig(string configPath)

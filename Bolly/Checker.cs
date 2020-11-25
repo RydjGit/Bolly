@@ -13,14 +13,14 @@ namespace Bolly
 {
     public class Checker
     {
+        public string Name { get; }
         public (int Invalid, int Free, int Success, int Unknwon, int Retry, int CPM) Stats { get => (_invalid, _free, _success, _unknown, _retry, _cpm); }
 
-        private readonly CheckerSettings _checkerSettings;
         private readonly Config _config;
         private readonly ClientManager _clientManager;
         private readonly IEnumerable<Combo> _combos;
         private readonly IEnumerable<Status> _validStatus;
-        private readonly ReaderWriterLock _locker;
+        private readonly ReaderWriterLock _writerLocker;
 
         private int _checked;
         private int _invalid;
@@ -30,18 +30,23 @@ namespace Bolly
         private int _retry;
         private int _cpm;
 
-        public Checker(CheckerSettings checkerSettings, Config config, IEnumerable<Combo> combos, ClientManager clientManager)
+        private const string Separator = " | ";
+        private const string OutputDirectory = "Result";
+
+        public Checker(Config config, IEnumerable<Combo> combos, ClientManager clientManager)
         {
-            _checkerSettings = checkerSettings;
+            Name = config.Name;
             _config = config;
             _combos = combos;
             _clientManager = clientManager;
             _validStatus = new[] { Status.Free, Status.Success, Status.Unknown };
-            _locker = new ReaderWriterLock();
+            _writerLocker = new ReaderWriterLock();
         }
 
         public async Task StartAsync()
         {
+            Directory.CreateDirectory(OutputDirectory);
+
             _ = StartCpmCalculator();
 
             await _combos.AsyncParallelForEach(async combo =>
@@ -56,6 +61,7 @@ namespace Bolly
                     {
                         await block.Execute(_clientManager.Client(), botData);
                         if (botData.Status == Status.Invalid) break;
+                        else if (botData.Status == Status.Retry) break;
                     }
 
                     if (botData.Status == Status.Retry)
@@ -68,30 +74,29 @@ namespace Bolly
                 }
 
                 if (botData.Status == Status.Invalid) Interlocked.Increment(ref _invalid);
-                else if(botData.Status == Status.Free) Interlocked.Increment(ref _free);
-                else if (botData.Status == Status.Success) Interlocked.Increment(ref _success);
-                else if (botData.Status == Status.Unknown) Interlocked.Increment(ref _unknown);
-
-                if (_validStatus.Contains(botData.Status))
+                else if (_validStatus.Contains(botData.Status))
                 {
                     string output = OutputBuilder(combo, botData);
                     string outputPath = PathBuilder(botData);
 
-                    Save(output, outputPath);
+                    while (!TrySave(output, outputPath)) await Task.Delay(100);
 
                     switch (botData.Status)
                     {
                         case Status.Free:
                             Console.ForegroundColor = ConsoleColor.DarkYellow;
                             Console.WriteLine(output);
+                            Interlocked.Increment(ref _free);
                             break;
                         case Status.Success:
                             Console.ForegroundColor = ConsoleColor.DarkGreen;
                             Console.WriteLine(output);
+                            Interlocked.Increment(ref _success);
                             break;
                         case Status.Unknown:
                             Console.ForegroundColor = ConsoleColor.DarkGray;
                             Console.WriteLine(output);
+                            Interlocked.Increment(ref _unknown);
                             break;
                     }
                 }
@@ -102,25 +107,35 @@ namespace Bolly
 
         private string OutputBuilder(Combo combo, BotData botData)
         {
-            if (botData.Captues.Count == 0) return combo.ToString();
+            var output = new StringBuilder()
+                .Append(DateTime.Now)
+                .Append(Separator)
+                .Append(botData.Status)
+                .Append(Separator)
+                .Append(combo);
 
-            return new StringBuilder(combo.ToString())
-                .Append(_checkerSettings.OutputSeparator)
-                .AppendJoin(_checkerSettings.OutputSeparator, botData.Captues.Select(c => $"{c.Key} = {c.Value}")).ToString();
+            if (botData.Captues.Count == 0) return output.ToString();
+
+            return output
+                .Append(Separator)
+                .AppendJoin(Separator, botData.Captues.Select(c => $"{c.Key} = {c.Value}")).ToString();
         }
 
-        private string PathBuilder(BotData botData) => Path.Combine(_checkerSettings.OutputDirectory, botData.Status.ToString()) + ".txt";
+        private string PathBuilder(BotData botData) => Path.Combine(OutputDirectory, botData.Status.ToString()) + ".txt";
 
-        private void Save(string data, string path)
+        private bool TrySave(string data, string path)
         {
             try
             {
-                _locker.AcquireWriterLock(int.MaxValue);
+                _writerLocker.AcquireWriterLock(int.MaxValue);
                 File.AppendAllText(path, data + Environment.NewLine);
+                _writerLocker.ReleaseWriterLock();
+                return true;
             }
-            finally
+            catch
             {
-                _locker.ReleaseWriterLock();
+                _writerLocker.ReleaseWriterLock();
+                return false;
             }
         }
 

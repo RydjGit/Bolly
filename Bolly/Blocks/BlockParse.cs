@@ -11,22 +11,22 @@ namespace Bolly.Blocks
     {
         protected class Parse
         {
-            public string ParseName { get; set; }
-            public string Source { get; set; }
-            public string Methode { get; set; }
+            public string VarName { get; set; }
+            public string Source { get; set; } = "<SOURCE>";
+            public string Methode { get; set; } = "LR";
             public string FirstInput { get; set; }
             public string SecondInput { get; set; }
-            public bool Capture { get; set; }
+            public bool Capture { get; set; } = false;
         }
 
         protected class ParseLR : IParse
         {
             public (bool success, string result) Execute(string source, string firstInput, string secondInput)
             {
-                int firstPosition = source.IndexOf(firstInput) + secondInput.Length;
-                int secondPosition = source.IndexOf(secondInput, firstPosition);
-                string result = source[firstPosition..secondPosition];
-                if (!string.IsNullOrEmpty(result)) return (true, result);
+                string pattern = firstInput + "(.*?)" + secondInput;
+                var match = Regex.Match(source, pattern);
+
+                if (match.Success) return (true, match.Groups[1].Value.Trim());
                 return (false, null);
             }
         }
@@ -45,8 +45,9 @@ namespace Bolly.Blocks
         {
             public (bool success, string result) Execute(string source, string firstInput, string secondInput)
             {
-                var match = Regex.Match(source, firstInput).Groups[0];
-                if (match.Success) return (true, match.Value);
+                var match = Regex.Match(source, firstInput);
+
+                if (match.Success) return (true, match.Groups[0].Value.Trim());
                 return (false, null);
             }
         }
@@ -80,8 +81,8 @@ namespace Bolly.Blocks
 
             if (success)
             {
-                botData.Variables.Add(_parse.ParseName, result);
-                if (_parse.Capture) botData.Captues.Add(_parse.ParseName, result);
+                botData.Variables.Add(_parse.VarName, result);
+                if (_parse.Capture) botData.Captues.Add(_parse.VarName, result);
             }
 
             await Task.CompletedTask;

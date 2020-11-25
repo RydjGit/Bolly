@@ -1,4 +1,5 @@
-﻿using Bolly.Models;
+﻿using Bolly.Enums;
+using Bolly.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -12,12 +13,12 @@ namespace Bolly.Blocks
     {
         protected class Request
         {
-            public string Methode { get; set; }
+            public string Methode { get; set; } = "Get";
             public string Url { get; set; }
             public string Content { get; set; }
             public string ContentType { get; set; }
-            public IEnumerable<string> Headers { get; set; }
-            public bool LoadSource { get; set; }
+            public IEnumerable<string> Headers { get; set; } = new string[] { };
+            public bool LoadSource { get; set; } = true;
         }
 
         private readonly Request _request;
@@ -37,22 +38,26 @@ namespace Bolly.Blocks
 
             if (_httpMethod == HttpMethod.Post) httpRequestMessage.Content = new StringContent(ReplaceValues(_request.Content, botData), Encoding.UTF8, _request.ContentType);
 
-            if (_request.Headers != null)
+            foreach (var header in _request.Headers)
             {
-                foreach (var header in _request.Headers)
-                {
-                    var headerSplit = header.Split(":");
-                    httpRequestMessage.Headers.TryAddWithoutValidation(headerSplit[0], ReplaceValues(headerSplit[1], botData));
-                }
+                var headerSplit = header.Split(":");
+                httpRequestMessage.Headers.TryAddWithoutValidation(headerSplit[0], ReplaceValues(headerSplit[1], botData));
             }
 
-            using var httpResponseMessage = await httpclient.SendAsync(httpRequestMessage);
+            try
+            {
+                using var httpResponseMessage = await httpclient.SendAsync(httpRequestMessage);
 
-            botData.Address = httpResponseMessage.RequestMessage.RequestUri.ToString();
+                botData.Address = httpResponseMessage.RequestMessage.RequestUri.ToString();
 
-            botData.ResponseCode = (int)httpResponseMessage.StatusCode;
+                botData.ResponseCode = (int)httpResponseMessage.StatusCode;
 
-            if (_request.LoadSource) botData.Source = await httpResponseMessage.Content.ReadAsStringAsync();
+                if (_request.LoadSource) botData.Source = await httpResponseMessage.Content.ReadAsStringAsync();
+            }
+            catch
+            {
+                botData.Status = Status.Retry;
+            }
         }
     }
 }

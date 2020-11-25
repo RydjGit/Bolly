@@ -47,6 +47,22 @@ you can also specify a list of proxies ( http only )
          "Capture":false
       },
       {
+         "Type":"Parse",
+         "ParseName":"TOKEN",
+         "Source":"<SOURCE>",
+         "Methode":"Json",
+         "FirstInput":"JsonInput",
+         "Capture":false
+      },
+      {
+         "Type":"Parse",
+         "ParseName":"TOKEN",
+         "Source":"<SOURCE>",
+         "Methode":"Regex",
+         "FirstInput":"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$",
+         "Capture":false
+      },
+      {
          "Type":"KeyCheck",
          "KeyCheckPatterns":[
             {
@@ -54,6 +70,24 @@ you can also specify a list of proxies ( http only )
                "Source":"<SOURCE>",
                "Condition":"Contains",
                "Key":"InvalidKey"
+            },
+            {
+               "Status":"Invalid",
+               "Source":"<SOURCE>",
+               "Condition":"LessThan",
+               "Key":"20"
+            },
+            {
+               "Status":"Invalid",
+               "Source":"<SOURCE>",
+               "Condition":"GreaterThan",
+               "Key":"10"
+            },
+            {
+               "Status":"Invalid",
+               "Source":"<SOURCE>",
+               "Condition":"RegexMatch",
+               "Key":"/^\\S+@\\S+\\.\\S+$/"
             },
             {
                "Status":"Success",

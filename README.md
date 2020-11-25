@@ -34,7 +34,8 @@ you can also specify a list of proxies ( http only )
             "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
             "Pragma: no-cache",
             "Accept: */*"
-         ]
+         ],
+         "LoadSource":true
       },
       {
          "Type":"Parse",
@@ -43,7 +44,7 @@ you can also specify a list of proxies ( http only )
          "Methode":"LR",
          "FirstInput":"LeftInput",
          "SecondInput":"RightInput",
-         "Capture":true
+         "Capture":false
       },
       {
          "Type":"KeyCheck",
@@ -60,7 +61,8 @@ you can also specify a list of proxies ( http only )
                "Condition":"Equal",
                "Key":"200"
             }
-         ]
+         ],
+         "RetryIfNotFound":true
       }
    ]
 }

@@ -59,7 +59,7 @@ you can also specify a list of proxies ( http only )
          "ParseName":"TOKEN",
          "Source":"<SOURCE>",
          "Methode":"Regex",
-         "FirstInput":"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$",
+         "FirstInput":"Regex",
          "Capture":false
       },
       {
@@ -69,7 +69,7 @@ you can also specify a list of proxies ( http only )
                "Status":"Invalid",
                "Source":"<SOURCE>",
                "Condition":"Contains",
-               "Key":"InvalidKey"
+               "Key":"Invalid"
             },
             {
                "Status":"Invalid",
@@ -87,7 +87,7 @@ you can also specify a list of proxies ( http only )
                "Status":"Invalid",
                "Source":"<SOURCE>",
                "Condition":"RegexMatch",
-               "Key":"/^\\S+@\\S+\\.\\S+$/"
+               "Key":"Regex"
             },
             {
                "Status":"Success",

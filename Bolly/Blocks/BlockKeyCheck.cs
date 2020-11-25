@@ -15,7 +15,7 @@ namespace Bolly.Blocks
         protected class KeyCheck
         {
             public IEnumerable<KeyCheckPattern> KeyCheckPatterns { get; set; }
-            public bool RetryIfNotFound { get; set; } = true;
+            public bool RetryIfNotFound { get; set; }
         }
 
         protected class KeyCheckEqual : IKeyCheck

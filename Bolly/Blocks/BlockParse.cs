@@ -12,11 +12,11 @@ namespace Bolly.Blocks
         protected class Parse
         {
             public string VarName { get; set; }
-            public string Source { get; set; } = "<SOURCE>";
-            public string Methode { get; set; } = "LR";
+            public string Source { get; set; }
+            public string Methode { get; set; }
             public string FirstInput { get; set; }
             public string SecondInput { get; set; }
-            public bool Capture { get; set; } = false;
+            public bool Capture { get; set; }
         }
 
         protected class ParseLR : IParse

@@ -13,12 +13,12 @@ namespace Bolly.Blocks
     {
         protected class Request
         {
-            public string Methode { get; set; } = "Get";
+            public string Methode { get; set; }
             public string Url { get; set; }
             public string Content { get; set; }
             public string ContentType { get; set; }
-            public IEnumerable<string> Headers { get; set; } = new string[] { };
-            public bool LoadSource { get; set; } = true;
+            public IEnumerable<string> Headers { get; set; }
+            public bool LoadSource { get; set; }
         }
 
         private readonly Request _request;
@@ -38,10 +38,13 @@ namespace Bolly.Blocks
 
             if (_httpMethod == HttpMethod.Post) httpRequestMessage.Content = new StringContent(ReplaceValues(_request.Content, botData), Encoding.UTF8, _request.ContentType);
 
-            foreach (var header in _request.Headers)
+            if (_request.Headers != null)
             {
-                var headerSplit = header.Split(":");
-                httpRequestMessage.Headers.TryAddWithoutValidation(headerSplit[0], ReplaceValues(headerSplit[1], botData));
+                foreach (var header in _request.Headers)
+                {
+                    var headerSplit = header.Split(":");
+                    httpRequestMessage.Headers.TryAddWithoutValidation(headerSplit[0], ReplaceValues(headerSplit[1], botData));
+                }
             }
 
             try

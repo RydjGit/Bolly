@@ -59,8 +59,9 @@ namespace Bolly
 
                     foreach (var block in _config.Blocks)
                     {
-                        await block.Execute(_clientManager.Client(), botData);
-                        if (botData.Status == Status.Invalid) break;
+                        await block.Execute(_clientManager.GetClient, botData);
+                        if (botData.Status == Status.None) continue;
+                        else if (botData.Status == Status.Invalid) break;
                         else if (botData.Status == Status.Retry) break;
                     }
 

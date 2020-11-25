@@ -4,6 +4,6 @@ namespace Bolly.Interfaces
 {
     public interface IClientManager
     {
-        public HttpClient Client();
+        public HttpClient GetClient { get; }
     }
 }

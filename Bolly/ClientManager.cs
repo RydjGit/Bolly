@@ -12,18 +12,18 @@ namespace Bolly
     {
         protected class SingleClient : IClientManager
         {
-            private readonly HttpClient _httpClient;
+            public HttpClient GetClient { get; }
 
             public SingleClient(HttpClient httpClient)
             {
-                _httpClient = httpClient;
+                GetClient = httpClient;
             }
-
-            public HttpClient Client() => _httpClient;
         }
 
         protected class ProxyCLient : IClientManager
         {
+            public HttpClient GetClient { get => _httpClients.ElementAt(_random.Next(_httpClients.Count())); }
+
             private readonly IEnumerable<HttpClient> _httpClients;
             private readonly Random _random;
 
@@ -32,9 +32,9 @@ namespace Bolly
                 _httpClients = httpClients;
                 _random = new Random();
             }
-
-            public HttpClient Client() => _httpClients.ElementAt(_random.Next(_httpClients.Count()));
         }
+
+        public HttpClient GetClient { get => _clientManager.GetClient; }
 
         private readonly Config _config;
         private IClientManager _clientManager;
@@ -50,7 +50,6 @@ namespace Bolly
         {
             var clients = proxies.Select(p => SetupProxyHttpClient(p));
             _clientManager = new ProxyCLient(clients);
-
             return this;
         }
 
@@ -97,7 +96,5 @@ namespace Bolly
 
             return httpClient;
         }
-
-        public HttpClient Client() => _clientManager.Client();
     }
 }

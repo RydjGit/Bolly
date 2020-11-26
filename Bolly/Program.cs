@@ -70,6 +70,9 @@ namespace Bolly
                     case "parse":
                         blocks.Add(new BlockParse(blockJsonElement.ToString()));
                         break;
+                    case "captchasoler":
+                        blocks.Add(new BlockCaptchaSolver(blockJsonElement.ToString()));
+                        break;
                     case "keycheck":
                         blocks.Add(new BlockKeyCheck(blockJsonElement.ToString()));
                         break;

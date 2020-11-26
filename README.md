@@ -47,13 +47,47 @@ you can also specify a list of proxies ( http only )
          "Capture":false
       },
       {
+         "Type":"Parse",
+         "ParseName":"TOKEN",
+         "Source":"<SOURCE>",
+         "Methode":"Json",
+         "FirstInput":"JsonInput",
+         "Capture":false
+      },
+      {
+         "Type":"Parse",
+         "ParseName":"TOKEN",
+         "Source":"<SOURCE>",
+         "Methode":"Regex",
+         "FirstInput":"Regex",
+         "Capture":false
+      },
+      {
          "Type":"KeyCheck",
          "KeyCheckPatterns":[
             {
                "Status":"Invalid",
                "Source":"<SOURCE>",
                "Condition":"Contains",
-               "Key":"InvalidKey"
+               "Key":"Invalid"
+            },
+            {
+               "Status":"Invalid",
+               "Source":"<SOURCE>",
+               "Condition":"LessThan",
+               "Key":"20"
+            },
+            {
+               "Status":"Invalid",
+               "Source":"<SOURCE>",
+               "Condition":"GreaterThan",
+               "Key":"10"
+            },
+            {
+               "Status":"Invalid",
+               "Source":"<SOURCE>",
+               "Condition":"RegexMatch",
+               "Key":"Regex"
             },
             {
                "Status":"Success",

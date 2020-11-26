@@ -25,7 +25,7 @@ you can also specify a list of proxies ( http only )
    },
    "Blocks":[
       {
-         "Type":"Request",
+         "Block":"Request",
          "Methode":"Post",
          "Url":"https://www.site.com",
          "ContentType":"application/x-www-form-urlencoded",
@@ -38,7 +38,15 @@ you can also specify a list of proxies ( http only )
          "LoadSource":true
       },
       {
-         "Type":"Parse",
+         "Block":"CaptchaSolver",
+         "ApiKey":"2CAPTCHA_API_KEY",
+         "Type":"ReCaptchaV2",
+         "Url":"https://www.site.com",
+         "SiteKey":"1abc234de56fab7c89012d34e56fa7b8",
+         "Invisible":true
+      },
+      {
+         "Block":"Parse",
          "ParseName":"TOKEN",
          "Source":"<SOURCE>",
          "Methode":"LR",
@@ -47,7 +55,7 @@ you can also specify a list of proxies ( http only )
          "Capture":false
       },
       {
-         "Type":"Parse",
+         "Block":"Parse",
          "ParseName":"TOKEN",
          "Source":"<SOURCE>",
          "Methode":"Json",
@@ -55,7 +63,7 @@ you can also specify a list of proxies ( http only )
          "Capture":false
       },
       {
-         "Type":"Parse",
+         "Block":"Parse",
          "ParseName":"TOKEN",
          "Source":"<SOURCE>",
          "Methode":"Regex",
@@ -63,7 +71,7 @@ you can also specify a list of proxies ( http only )
          "Capture":false
       },
       {
-         "Type":"KeyCheck",
+         "Block":"KeyCheck",
          "KeyCheckPatterns":[
             {
                "Status":"Invalid",

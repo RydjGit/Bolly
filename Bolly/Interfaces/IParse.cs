@@ -2,6 +2,6 @@
 {
     public interface IParse
     {
-        public (bool success, string result) Execute(string source, string firstInput, string secondInput);
+        public bool Execute(string source, string firstInput, string secondInput, out string value);
     }
 }

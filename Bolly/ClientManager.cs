@@ -1,5 +1,4 @@
-﻿using Bolly.Interfaces;
-using Bolly.Models;
+﻿using Bolly.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,46 +9,24 @@ namespace Bolly
 {
     public class ClientManager
     {
-        protected class SingleClient : IClientManager
-        {
-            public HttpClient GetClient { get; }
-
-            public SingleClient(HttpClient httpClient)
-            {
-                GetClient = httpClient;
-            }
-        }
-
-        protected class ProxyCLient : IClientManager
-        {
-            public HttpClient GetClient { get => _httpClients.ElementAt(_random.Next(_httpClients.Count())); }
-
-            private readonly IEnumerable<HttpClient> _httpClients;
-            private readonly Random _random;
-
-            public ProxyCLient(IEnumerable<HttpClient> httpClients)
-            {
-                _httpClients = httpClients;
-                _random = new Random();
-            }
-        }
-
-        public HttpClient GetClient { get => _clientManager.GetClient; }
+        public HttpClient ProxyClient { get => _useProxies ? _httpClient : _httpClients.ElementAt(_random.Next(_httpClients.Count())); }
 
         private readonly Config _config;
-        private IClientManager _clientManager;
+        private readonly HttpClient _httpClient;
+        private readonly Random _random;
+        private IEnumerable<HttpClient> _httpClients;
+        private bool _useProxies;
 
         public ClientManager(Config config)
         {
             _config = config;
-            var client = SetupSingleHttpClient();
-            _clientManager = new SingleClient(client);
+            _httpClient = SetupSingleHttpClient();
         }
 
         public ClientManager WithProxies(IEnumerable<Proxy> proxies)
         {
-            var clients = proxies.Select(p => SetupProxyHttpClient(p));
-            _clientManager = new ProxyCLient(clients);
+            _httpClients = proxies.Select(p => SetupProxyHttpClient(p));
+            _useProxies = true;
             return this;
         }
 

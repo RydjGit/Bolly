@@ -60,7 +60,7 @@ namespace Bolly
 
             foreach (var blockJsonElement in blockJsonElements)
             {
-                string blockType = blockJsonElement.GetProperty("Type").GetString();
+                string blockType = blockJsonElement.GetProperty("Block").GetString();
 
                 switch (blockType.ToLower())
                 {

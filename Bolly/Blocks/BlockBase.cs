@@ -7,9 +7,9 @@ namespace Bolly.Blocks
 {
     public abstract class BlockBase
     {
-        public abstract Task Execute(HttpClient httpClient, BotData botData);
-
         private const string Pattern = "<(.*?)>";
+
+        public abstract Task Execute(HttpClient httpClient, BotData botData);
 
         protected string ReplaceValues(string input, BotData botData)
         {
@@ -34,8 +34,8 @@ namespace Bolly.Blocks
                     case "responsecode":
                         input = input.Replace(match.Value, botData.ResponseCode.ToString());
                         break;
-                    default:
-                        if (botData.Variables.ContainsKey(match.Groups[1].Value)) input = input.Replace(match.Value, botData.Variables[match.Groups[1].Value]);
+                    default:   
+                        if (botData.Variables.TryGetValue(match.Groups[1].Value, out var value)) input = input.Replace(match.Value, value);
                         break;
                 }
             }

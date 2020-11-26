@@ -21,34 +21,56 @@ namespace Bolly.Blocks
 
         protected class ParseLR : IParse
         {
-            public (bool success, string result) Execute(string source, string firstInput, string secondInput)
+            public bool Execute(string source, string firstInput, string secondInput, out string value)
             {
+                value = null;
+
                 string pattern = firstInput + "(.*?)" + secondInput;
                 var match = Regex.Match(source, pattern);
 
-                if (match.Success) return (true, match.Groups[1].Value.Trim());
-                return (false, null);
+                if (match.Success)
+                { 
+                    value = match.Groups[1].Value.Trim();
+                    return true;
+                }
+
+                return false;
             }
         }
 
         protected class ParseJson : IParse
         {
-            public (bool success, string result) Execute(string source, string firstInput, string secondInput)
+            public bool Execute(string source, string firstInput, string secondInput, out string value)
             {
+                value = null;
+
                 var jsonElement = JsonSerializer.Deserialize<JsonElement>(source);
-                if (jsonElement.TryGetProperty(firstInput, out var result)) return (true, result.GetString());
-                return (false, null);
+
+                if (jsonElement.TryGetProperty(firstInput, out var result))
+                {
+                    value = result.GetString();
+                    return true;
+                }
+
+                return false;
             }
         }
 
         protected class ParseRegex : IParse
         {
-            public (bool success, string result) Execute(string source, string firstInput, string secondInput)
+            public bool Execute(string source, string firstInput, string secondInput, out string value)
             {
+                value = null;
+
                 var match = Regex.Match(source, firstInput);
 
-                if (match.Success) return (true, match.Groups[0].Value.Trim());
-                return (false, null);
+                if (match.Success)
+                {
+                    value = match.Groups[0].Value.Trim();
+                    return true;
+                }
+
+                return false;
             }
         }
 
@@ -77,12 +99,10 @@ namespace Bolly.Blocks
         {
             string source = ReplaceValues(_parse.Source, botData);
 
-            var (success, result) = _parseProcess.Execute(source, _parse.FirstInput, _parse.SecondInput);
-
-            if (success)
+            if (_parseProcess.Execute(source, _parse.FirstInput, _parse.SecondInput, out string value))
             {
-                botData.Variables.Add(_parse.VarName, result);
-                if (_parse.Capture) botData.Captues.Add(_parse.VarName, result);
+                if (!botData.Variables.TryAdd(_parse.VarName, value)) botData.Variables[_parse.VarName] = value;
+                if (_parse.Capture) if (!botData.Captues.TryAdd(_parse.VarName, value)) botData.Captues[_parse.VarName] = value;
             }
 
             await Task.CompletedTask;

@@ -18,7 +18,8 @@ you can also specify a list of proxies ( http only )
 ```json
 {
    "Settings":{
-      "Name":"Site",
+      "Name":"Example",
+      "UseProxies":false,
       "UseCookies":false,
       "AllowAutoRedirect":true,
       "MaxDegreeOfParallelism":1
@@ -26,83 +27,64 @@ you can also specify a list of proxies ( http only )
    "Blocks":[
       {
          "Block":"Request",
-         "Methode":"Post",
-         "Url":"https://www.site.com",
-         "ContentType":"application/x-www-form-urlencoded",
-         "Content":"email=<USERNAME>&password=<PASSWORD>",
-         "Headers":[
-            "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
-            "Pragma: no-cache",
-            "Accept: */*"
-         ],
+         "Methode":"Get",
+         "Url":"https://api.ipify.org?format=json",
+         "ContentType":"",
+         "Content":"",
+         "Headers":[],
          "LoadSource":true
       },
       {
-         "Block":"CaptchaSolver",
-         "ApiKey":"2CAPTCHA_API_KEY",
-         "Type":"ReCaptchaV2",
-         "Url":"https://www.site.com",
-         "SiteKey":"1abc234de56fab7c89012d34e56fa7b8",
-         "Invisible":true
+         "Block":"Parse",
+         "ParseName":"IP",
+         "Source":"<SOURCE>",
+         "Methode":"JSON",
+         "FirstInput":"ip",
+         "SecondInput":"",
+         "Capture":true
       },
       {
          "Block":"Parse",
-         "ParseName":"TOKEN",
+         "ParseName":"IP",
          "Source":"<SOURCE>",
-         "Methode":"LR",
-         "FirstInput":"LeftInput",
-         "SecondInput":"RightInput",
-         "Capture":false
-      },
-      {
-         "Block":"Parse",
-         "ParseName":"TOKEN",
-         "Source":"<SOURCE>",
-         "Methode":"Json",
-         "FirstInput":"JsonInput",
-         "Capture":false
-      },
-      {
-         "Block":"Parse",
-         "ParseName":"TOKEN",
-         "Source":"<SOURCE>",
-         "Methode":"Regex",
-         "FirstInput":"Regex",
-         "Capture":false
+         "Methode":"REGEX",
+         "FirstInput":"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$",
+         "SecondInput":"0",
+         "Capture":true
       },
       {
          "Block":"KeyCheck",
          "KeyCheckPatterns":[
             {
                "Status":"Invalid",
-               "Source":"<SOURCE>",
+               "Source":"Bad key",
                "Condition":"Contains",
-               "Key":"Invalid"
+               "Key":"Bad"
             },
             {
                "Status":"Invalid",
-               "Source":"<SOURCE>",
+               "Source":"Bad key",
+               "Condition":"EqualTo",
+               "Key":"Bad key"
+            },
+            {
+               "Status":"Invalid",
+               "Source":"5",
                "Condition":"LessThan",
-               "Key":"20"
+               "Key":"9"
             },
             {
                "Status":"Invalid",
-               "Source":"<SOURCE>",
-               "Condition":"GreaterThan",
-               "Key":"10"
+               "Source":"5",
+               "Condition":"greaterthan",
+               "Key":"9"
             },
             {
                "Status":"Invalid",
-               "Source":"<SOURCE>",
+               "Source":"Bad key",
                "Condition":"RegexMatch",
-               "Key":"Regex"
+               "Key":"/d(b+)d/g"
             },
-            {
-               "Status":"Success",
-               "Source":"<RESPONSECODE>",
-               "Condition":"Equal",
-               "Key":"200"
-            }
          ],
          "RetryIfNotFound":true
       }

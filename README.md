@@ -1,16 +1,12 @@
 # Bolly
 
-Bolly is an credentials stuffing tool based on OpenBullet high performance because it reuses the same http client [httpclient best practices](https://www.thecodebuzz.com/using-httpclient-best-practices-and-anti-patterns/)
+Bolly is an credentials stuffing tool based on OpenBullet high performance because it reuses the same http client [httpclient best practices](https://www.thecodebuzz.com/using-httpclient-best-practices-and-anti-patterns/) support HTTP proxies only
 
 # Usage
 
-Open your cmd and past
+Open your cmd and copy
 ```
-> Bolly.exe your_config.json your_combos.txt
-```
-you can also specify a list of proxies ( http only )
-```
-> Bolly.exe your_config.json your_combos.txt your_proxies.txt
+> Bolly.exe your_config.json your_combos.txt your_proxies.txt ( optional )
 ```
 
 # Config Example
@@ -62,25 +58,25 @@ you can also specify a list of proxies ( http only )
                "Key":"Bad"
             },
             {
-               "Status":"Invalid",
+               "Status":"Free",
                "Source":"Bad key",
                "Condition":"EqualTo",
                "Key":"Bad key"
             },
             {
-               "Status":"Invalid",
+               "Status":"Success",
                "Source":"5",
                "Condition":"LessThan",
-               "Key":"9"
+               "Key":"10"
             },
             {
-               "Status":"Invalid",
+               "Status":"Unknown",
                "Source":"5",
-               "Condition":"greaterthan",
-               "Key":"9"
+               "Condition":"GreaterThan",
+               "Key":"10"
             },
             {
-               "Status":"Invalid",
+               "Status":"Retry",
                "Source":"Bad key",
                "Condition":"RegexMatch",
                "Key":"/d(b+)d/g"

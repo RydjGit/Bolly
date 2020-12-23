@@ -32,5 +32,11 @@
 
             IsValid = true;
         }
+
+        public override string ToString()
+        {
+            if (WithCredentials) return string.Join(Separator, Host, Port, Username, Password);
+            return string.Join(Separator, Host, Port);
+        }
     }
 }

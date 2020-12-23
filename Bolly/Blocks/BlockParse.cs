@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace Bolly.Blocks
 {
-    public class BlockParse : BlockBase
+    public class BlockParse : Block
     {
-        protected class Parse
+        private class Parse
         {
-            public string VarName { get; set; }
+            public string ParseName { get; set; }
             public string Source { get; set; }
             public string Methode { get; set; }
             public string FirstInput { get; set; }
@@ -19,58 +19,35 @@ namespace Bolly.Blocks
             public bool Capture { get; set; }
         }
 
-        protected class ParseLR : IParse
+        private class ParseJson : IParse
         {
-            public bool Execute(string source, string firstInput, string secondInput, out string value)
+            public bool IsSuccess { get; set; }
+            public string Result { get; set; }
+
+            public void Execute(string source, string firstInput, string secondInput)
             {
-                value = null;
-
-                string pattern = firstInput + "(.*?)" + secondInput;
-                var match = Regex.Match(source, pattern);
-
-                if (match.Success)
-                { 
-                    value = match.Groups[1].Value.Trim();
-                    return true;
-                }
-
-                return false;
-            }
-        }
-
-        protected class ParseJson : IParse
-        {
-            public bool Execute(string source, string firstInput, string secondInput, out string value)
-            {
-                value = null;
-
                 var jsonElement = JsonSerializer.Deserialize<JsonElement>(source);
-
                 if (jsonElement.TryGetProperty(firstInput, out var result))
                 {
-                    value = result.GetString();
-                    return true;
+                    IsSuccess = true;
+                    Result = result.ToString();
                 }
-
-                return false;
             }
         }
 
-        protected class ParseRegex : IParse
+        private class ParseRegex : IParse
         {
-            public bool Execute(string source, string firstInput, string secondInput, out string value)
+            public bool IsSuccess { get; set; }
+            public string Result { get; set; }
+
+            public void Execute(string source, string firstInput, string secondInput)
             {
-                value = null;
-
-                var match = Regex.Match(source, firstInput);
-
+                var match = Regex.Match(source, firstInput).Groups[secondInput];
                 if (match.Success)
                 {
-                    value = match.Groups[0].Value.Trim();
-                    return true;
+                    IsSuccess = true;
+                    Result = match.Value;
                 }
-
-                return false;
             }
         }
 
@@ -83,9 +60,6 @@ namespace Bolly.Blocks
 
             switch (_parse.Methode.ToLower())
             {
-                case "lr":
-                    _parseProcess = new ParseLR();
-                    break;
                 case "json":
                     _parseProcess = new ParseJson();
                     break;
@@ -95,14 +69,16 @@ namespace Bolly.Blocks
             }
         }
 
-        public override async Task Execute(HttpClient httpclient, BotData botData)
+        public override async Task Execute(Combo combo, HttpClient httpclient, BotData botData)
         {
-            string source = ReplaceValues(_parse.Source, botData);
+            string source = ReplaceValues(_parse.Source, combo, botData);
 
-            if (_parseProcess.Execute(source, _parse.FirstInput, _parse.SecondInput, out string value))
+            _parseProcess.Execute(source, _parse.FirstInput, _parse.SecondInput);
+
+            if (_parseProcess.IsSuccess)
             {
-                if (!botData.Variables.TryAdd(_parse.VarName, value)) botData.Variables[_parse.VarName] = value;
-                if (_parse.Capture) if (!botData.Captues.TryAdd(_parse.VarName, value)) botData.Captues[_parse.VarName] = value;
+                if (!botData.Variables.TryAdd(_parse.ParseName, _parseProcess.Result)) botData.Variables[_parse.ParseName] = _parseProcess.Result;
+                if (_parse.Capture) if (!botData.Captues.TryAdd(_parse.ParseName, _parseProcess.Result)) botData.Captues[_parse.ParseName] = _parseProcess.Result;
             }
 
             await Task.CompletedTask;

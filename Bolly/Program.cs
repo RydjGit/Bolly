@@ -15,89 +15,98 @@ namespace Bolly
         {
             if (args.Length < 2) throw new ArgumentOutOfRangeException("Need to enter at least two arguments");
 
-            var config = SetupConfig(args[0]);
+            string configFile = args[0];
 
-            var combos = SetupCombos(args[1]);
+            CheckExistenceFile(configFile);
 
-            ClientManager clientManager;
+            var settings = SetupSettings(configFile);
 
-            if (args.Length == 3)
-            {
-                var proxies = SetupProxies(args[2]);
-                clientManager = new ClientManager(config).WithProxies(proxies);
-            }
-            else clientManager = new ClientManager(config);
+            var blocks = SetupBlocks(configFile);
 
-            var checker = new Checker(config, combos, clientManager);
+            string combosFile = args[1];
 
-            var consoleManager = new ConsoleManager(checker);
+            CheckExistenceFile(combosFile);
+
+            var combos = SetupCombos(combosFile);
+
+            var httpClientManager = SetupHttpClientManager(args, settings);
+
+            var checker = new Checker(settings, blocks, combos, httpClientManager);
+
+            var consoleManager = new ConsoleManager(settings, checker);
 
             _ = consoleManager.StartUpdatingTitleAsync();
 
             await checker.StartAsync();
 
-            Console.ResetColor();
-            Console.WriteLine("END");
-
-            await Task.Delay(-1);
+            consoleManager.End();
         }
 
-        private static Config SetupConfig(string configPath)
+        private static Settings SetupSettings(string file)
         {
-            if (!File.Exists(configPath)) throw new FileNotFoundException($"{configPath} not found");
+            string contentFile = File.ReadAllText(file);
 
-            string configContent = File.ReadAllText(configPath);
+            var jsonElement = JsonSerializer.Deserialize<JsonElement>(contentFile).GetProperty("Settings");
 
-            var jsonElement = JsonSerializer.Deserialize<JsonElement>(configContent);
+            return JsonSerializer.Deserialize<Settings>(jsonElement.ToString());
+        }
 
-            var settingsJsonString = jsonElement.GetProperty("Settings").ToString();
+        private static IEnumerable<Block> SetupBlocks(string file)
+        {
+            string contentFile = File.ReadAllText(file);
 
-            var config = JsonSerializer.Deserialize<Config>(settingsJsonString);
+            var jsonElements = JsonSerializer.Deserialize<JsonElement>(contentFile).GetProperty("Blocks").EnumerateArray();
 
-            var blockJsonElements = jsonElement.GetProperty("Blocks").EnumerateArray();
+            var blocks = new List<Block>();
 
-            var blocks = new List<BlockBase>();
-
-            foreach (var blockJsonElement in blockJsonElements)
+            foreach (var jsonElement in jsonElements)
             {
-                string blockType = blockJsonElement.GetProperty("Block").GetString();
+                string block = jsonElement.GetProperty("Block").GetString();
 
-                switch (blockType.ToLower())
+                switch (block.ToLower())
                 {
                     case "request":
-                        blocks.Add(new BlockRequest(blockJsonElement.ToString()));
+                        blocks.Add(new BlockRequest(jsonElement.ToString()));
                         break;
                     case "parse":
-                        blocks.Add(new BlockParse(blockJsonElement.ToString()));
-                        break;
-                    case "captchasoler":
-                        blocks.Add(new BlockCaptchaSolver(blockJsonElement.ToString()));
+                        blocks.Add(new BlockParse(jsonElement.ToString()));
                         break;
                     case "keycheck":
-                        blocks.Add(new BlockKeyCheck(blockJsonElement.ToString()));
+                        blocks.Add(new BlockKeyCheck(jsonElement.ToString()));
                         break;
                 }
             }
 
-            config.Blocks = blocks;
-
-            return config;
+            return blocks;
         }
 
-        private static IEnumerable<Combo> SetupCombos(string combosPath)
+        private static IEnumerable<Combo> SetupCombos(string file)
         {
-            if (!File.Exists(combosPath)) throw new FileNotFoundException($"{combosPath} not found");
-
-            var lines = File.ReadAllLines(combosPath);
-            return lines.Select(c => new Combo(c)).Where(c => c.IsValid);
+            var linesOfCombos = File.ReadAllLines(file);
+            return linesOfCombos.Select(c => new Combo(c)).Where(c => c.IsValid);
         }
 
-        private static IEnumerable<Proxy> SetupProxies(string proxiesPath)
+        private static HttpClientManager SetupHttpClientManager(string[] args, Settings settings)
         {
-            if (!File.Exists(proxiesPath)) throw new FileNotFoundException($"{proxiesPath} not found");
+            if (settings.UseProxies)
+            {
+                string proxyFile = args[2];
+                CheckExistenceFile(proxyFile);
+                var proxies = SetupProxies(proxyFile);
+                return new HttpClientManager(settings, proxies);
+            }
+            return new HttpClientManager(settings);
+        }
 
-            var lines = File.ReadAllLines(proxiesPath);
-            return lines.Select(p => new Proxy(p)).Where(p => p.IsValid);
+        private static IEnumerable<Proxy> SetupProxies(string file)
+        {
+            var linesOfProxies = File.ReadAllLines(file);
+            return linesOfProxies.Select(p => new Proxy(p)).Where(p => p.IsValid);
+        }
+
+        private static void CheckExistenceFile(string file)
+        {
+            if (!File.Exists(file)) throw new FileNotFoundException($"{file} not found");
         }
     }
 }

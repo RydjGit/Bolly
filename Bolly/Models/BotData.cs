@@ -6,7 +6,6 @@ namespace Bolly.Models
 {
     public class BotData
     {
-        public Combo Combo { get; }
         public Status Status { get; set; }
         public int ResponseCode { get; set; }
         public string Address { get; set; }
@@ -14,9 +13,8 @@ namespace Bolly.Models
         public Dictionary<string, string> Variables { get; }
         public Dictionary<string, string> Captues { get; }
 
-        public BotData (Combo combo)
+        public BotData ()
         {
-            Combo = combo;
             Status = Status.None;
             Variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             Captues = new Dictionary<string, string>();

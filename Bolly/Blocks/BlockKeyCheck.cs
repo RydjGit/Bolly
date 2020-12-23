@@ -10,15 +10,15 @@ using System.Threading.Tasks;
 
 namespace Bolly.Blocks
 {
-    public class BlockKeyCheck : BlockBase
+    public class BlockKeyCheck : Block
     {
-        protected class KeyCheck
+        private class KeyCheck
         {
             public IEnumerable<KeyCheckPattern> KeyCheckPatterns { get; set; }
             public bool RetryIfNotFound { get; set; }
         }
 
-        protected class KeyCheckEqual : IKeyCheck
+        private class KeyCheckEqual : IKeyCheck
         {
             public KeyCheckPattern KeyCheckPattern { get; }
 
@@ -34,7 +34,7 @@ namespace Bolly.Blocks
             }
         }
 
-        protected class KeyCheckContains : IKeyCheck
+        private class KeyCheckContains : IKeyCheck
         {
             public KeyCheckPattern KeyCheckPattern { get; }
 
@@ -50,7 +50,7 @@ namespace Bolly.Blocks
             }
         }
 
-        protected class KeyCheckLessthan : IKeyCheck
+        private class KeyCheckLessthan : IKeyCheck
         {
             public KeyCheckPattern KeyCheckPattern { get; }
 
@@ -66,7 +66,7 @@ namespace Bolly.Blocks
             }
         }
 
-        protected class KeyCheckGreaterthan : IKeyCheck
+        private class KeyCheckGreaterthan : IKeyCheck
         {
             public KeyCheckPattern KeyCheckPattern { get; }
 
@@ -82,7 +82,7 @@ namespace Bolly.Blocks
             }
         }
 
-        protected class KeyCheckRegexMatch : IKeyCheck
+        private class KeyCheckRegexMatch : IKeyCheck
         {
             public KeyCheckPattern KeyCheckPattern { get; }
 
@@ -111,7 +111,7 @@ namespace Bolly.Blocks
             {
                 switch (keyCheckPattern.Condition.ToLower())
                 {
-                    case "equal":
+                    case "equalto":
                         _keyCheckProcess.Add(new KeyCheckEqual(keyCheckPattern));
                         break;
                     case "contains":
@@ -130,15 +130,15 @@ namespace Bolly.Blocks
             }
         }
 
-        public override async Task Execute(HttpClient httpclient, BotData botData)
+        public override async Task Execute(Combo combo, HttpClient httpclient, BotData botData)
         {
             bool isNotFound = true;
 
             foreach (var keyCheck in _keyCheckProcess)
             {
-                string source = ReplaceValues(keyCheck.KeyCheckPattern.Source, botData);
+                string source = ReplaceValues(keyCheck.KeyCheckPattern.Source, combo, botData);
 
-                string key = ReplaceValues(keyCheck.KeyCheckPattern.Key, botData);
+                string key = ReplaceValues(keyCheck.KeyCheckPattern.Key, combo, botData);
 
                 if (keyCheck.Execute(source, key))
                 {

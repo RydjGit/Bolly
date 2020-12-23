@@ -2,6 +2,9 @@
 {
     public interface IParse
     {
-        public bool Execute(string source, string firstInput, string secondInput, out string value);
+        public bool IsSuccess { get; set; }
+        public string Result { get; set; }
+
+        public void Execute(string source, string firstInput, string secondInput);
     }
 }

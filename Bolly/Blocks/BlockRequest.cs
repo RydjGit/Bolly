@@ -1,5 +1,4 @@
-﻿using Bolly.Enums;
-using Bolly.Models;
+﻿using Bolly.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -9,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace Bolly.Blocks
 {
-    public class BlockRequest : BlockBase
+    public class BlockRequest : Block
     {
-        protected class Request
+        private class Request
         {
             public string Methode { get; set; }
             public string Url { get; set; }
@@ -22,45 +21,35 @@ namespace Bolly.Blocks
         }
 
         private readonly Request _request;
-        private readonly HttpMethod _httpMethod;
 
         public BlockRequest(string jsonString)
         {
             _request = JsonSerializer.Deserialize<Request>(jsonString);
-            _httpMethod = new HttpMethod(_request.Methode);
         }
 
-        public override async Task Execute(HttpClient httpclient, BotData botData)
+        public override async Task Execute(Combo combo, HttpClient httpclient, BotData botData)
         {
-            var uri = new Uri(ReplaceValues(_request.Url, botData));
+            var method = new HttpMethod(_request.Methode);
 
-            using var httpRequestMessage = new HttpRequestMessage(_httpMethod, uri);
+            var uri = new Uri(ReplaceValues(_request.Url, combo, botData));
 
-            if (_httpMethod == HttpMethod.Post) httpRequestMessage.Content = new StringContent(ReplaceValues(_request.Content, botData), Encoding.UTF8, _request.ContentType);
+            using var httpRequestMessage = new HttpRequestMessage(method, uri);
 
-            if (_request.Headers != null)
+            if (method == HttpMethod.Post) httpRequestMessage.Content = new StringContent(ReplaceValues(_request.Content, combo, botData), Encoding.UTF8, _request.ContentType);
+
+            foreach (var header in _request.Headers)
             {
-                foreach (var header in _request.Headers)
-                {
-                    var headerSplit = header.Split(":");
-                    httpRequestMessage.Headers.TryAddWithoutValidation(headerSplit[0], ReplaceValues(headerSplit[1], botData));
-                }
+                var headerSplit = header.Split(":");
+                httpRequestMessage.Headers.TryAddWithoutValidation(headerSplit[0], ReplaceValues(headerSplit[1], combo, botData));
             }
 
-            try
-            {
-                using var httpResponseMessage = await httpclient.SendAsync(httpRequestMessage);
+            using var httpResponseMessage = await httpclient.SendAsync(httpRequestMessage);
 
-                botData.Address = httpResponseMessage.RequestMessage.RequestUri.ToString();
+            botData.Address = httpResponseMessage.RequestMessage.RequestUri.ToString();
 
-                botData.ResponseCode = (int)httpResponseMessage.StatusCode;
+            botData.ResponseCode = (int)httpResponseMessage.StatusCode;
 
-                if (_request.LoadSource) botData.Source = await httpResponseMessage.Content.ReadAsStringAsync();
-            }
-            catch
-            {
-                botData.Status = Status.Retry;
-            }
+            if (_request.LoadSource) botData.Source = await httpResponseMessage.Content.ReadAsStringAsync();
         }
     }
 }

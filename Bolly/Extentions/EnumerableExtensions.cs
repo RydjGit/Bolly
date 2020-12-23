@@ -16,7 +16,10 @@ namespace Bolly.Extentions
 
             var block = new ActionBlock<T>(body, options);
 
-            foreach (var item in source) block.Post(item);
+            foreach (var item in source) 
+            { 
+                block.Post(item); 
+            }
 
             block.Complete();
 

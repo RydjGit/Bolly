@@ -1,10 +1,12 @@
-﻿using Bolly.Enums;
+﻿using Bolly.Blocks;
+using Bolly.Enums;
 using Bolly.Extentions;
 using Bolly.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,14 +15,17 @@ namespace Bolly
 {
     public class Checker
     {
-        public string Name { get; }
-        public (int Invalid, int Free, int Success, int Unknwon, int Retry, int CPM) Stats { get => (_invalid, _free, _success, _unknown, _retry, _cpm); }
+        public Tuple<int, int, int, int, int, int> GetStats
+        {
+            get => Tuple.Create(_invalid, _free, _success, _unknown, _retry, _cpm);
+        }
 
-        private readonly Config _config;
-        private readonly ClientManager _clientManager;
+        private readonly Settings _settings;
+        private readonly IEnumerable<Block> _blocks;
         private readonly IEnumerable<Combo> _combos;
+        private readonly HttpClientManager _httpClientManager;
         private readonly IEnumerable<Status> _validStatus;
-        private readonly ReaderWriterLock _writerLocker;
+        private readonly ReaderWriterLock _locker;
 
         private int _checked;
         private int _invalid;
@@ -30,17 +35,17 @@ namespace Bolly
         private int _retry;
         private int _cpm;
 
-        private const string Separator = " | ";
-        private const string OutputDirectory = "Result";
+        private const string OutputSeparator = " | ";
+        private const string OutputDirectory = "Results";
 
-        public Checker(Config config, IEnumerable<Combo> combos, ClientManager clientManager)
+        public Checker(Settings settings, IEnumerable<Block> blocks, IEnumerable<Combo> combos, HttpClientManager httpClientManager)
         {
-            Name = config.Name;
-            _config = config;
+            _settings = settings;
+            _blocks = blocks;
             _combos = combos;
-            _clientManager = clientManager;
+            _httpClientManager = httpClientManager;
             _validStatus = new[] { Status.Free, Status.Success, Status.Unknown };
-            _writerLocker = new ReaderWriterLock();
+            _locker = new ReaderWriterLock();
         }
 
         public async Task StartAsync()
@@ -52,35 +57,39 @@ namespace Bolly
             await _combos.AsyncParallelForEach(async combo =>
             {
                 BotData botData;
+                HttpClient httpClient;
 
                 while (true)
                 {
-                    botData = new BotData(combo);
+                    botData = new BotData();
+                    httpClient = _httpClientManager.GetClient();
 
-                    foreach (var block in _config.Blocks)
+                    foreach (var block in _blocks)
                     {
-                        await block.Execute(_clientManager.GetClient, botData);
-                        if (botData.Status == Status.None) continue;
-                        else if (botData.Status == Status.Invalid) break;
-                        else if (botData.Status == Status.Retry) break;
+                        await block.Execute(combo, httpClient, botData);
+                        if (botData.Status == Status.Invalid)
+                        {
+                            Interlocked.Increment(ref _invalid);
+                            break;
+                        }
+                        else if (botData.Status == Status.Retry)
+                        {
+                            Interlocked.Increment(ref _retry);
+                            break;
+                        }
                     }
 
-                    if (botData.Status == Status.Retry)
-                    {
-                        Interlocked.Increment(ref _retry);
-                        continue;
-                    }
+                    if (botData.Status == Status.Retry) continue;
 
                     break;
                 }
 
-                if (botData.Status == Status.Invalid) Interlocked.Increment(ref _invalid);
-                else if (_validStatus.Contains(botData.Status))
+                if (_validStatus.Contains(botData.Status))
                 {
                     string output = OutputBuilder(combo, botData);
                     string outputPath = PathBuilder(botData);
 
-                    while (!TrySave(output, outputPath)) await Task.Delay(100);
+                    Save(output, outputPath);
 
                     switch (botData.Status)
                     {
@@ -103,40 +112,36 @@ namespace Bolly
                 }
 
                 Interlocked.Increment(ref _checked);
-            }, _config.MaxDegreeOfParallelism);
+            }, _settings.MaxDegreeOfParallelism);
         }
 
         private string OutputBuilder(Combo combo, BotData botData)
         {
-            var output = new StringBuilder()
-                .Append(DateTime.Now)
-                .Append(Separator)
-                .Append(botData.Status)
-                .Append(Separator)
-                .Append(combo);
+            var output = new StringBuilder().Append("DATA = ").Append(combo);
 
             if (botData.Captues.Count == 0) return output.ToString();
 
-            return output
-                .Append(Separator)
-                .AppendJoin(Separator, botData.Captues.Select(c => $"{c.Key} = {c.Value}")).ToString();
+            output.Append(OutputSeparator);
+            output.AppendJoin(OutputSeparator, botData.Captues.Select(c => $"{c.Key} = {c.Value}")).ToString();
+
+            return output.ToString();
         }
 
-        private string PathBuilder(BotData botData) => Path.Combine(OutputDirectory, botData.Status.ToString()) + ".txt";
+        private string PathBuilder(BotData botData)
+        {
+            return Path.Combine(OutputDirectory, botData.Status.ToString()) + ".txt";
+        }
 
-        private bool TrySave(string data, string path)
+        private void Save(string data, string path)
         {
             try
             {
-                _writerLocker.AcquireWriterLock(int.MaxValue);
+                _locker.AcquireWriterLock(int.MaxValue);
                 File.AppendAllText(path, data + Environment.NewLine);
-                _writerLocker.ReleaseWriterLock();
-                return true;
             }
-            catch
+            finally
             {
-                _writerLocker.ReleaseWriterLock();
-                return false;
+                _locker.ReleaseWriterLock();
             }
         }
 

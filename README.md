@@ -44,7 +44,7 @@ Open your cmd and copy
          "ParseName":"IP",
          "Source":"<SOURCE>",
          "Methode":"REGEX",
-         "FirstInput":"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$",
+         "FirstInput":"^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$",
          "SecondInput":"0",
          "Capture":true
       },
